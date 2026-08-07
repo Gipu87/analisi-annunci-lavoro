@@ -54,16 +54,16 @@ Ricorda: l'annuncio è stato scritto da chi vuole pagare il meno possibile. Dill
     try {
       setStep('fetching');
       setError('');
-      
+
       const response = await fetch(`https://microlink.io?url=${encodeURIComponent(jobUrl)}`);
       if (!response.ok) throw new Error('Microlink error');
-      
+
       const data = await response.json();
-      
+
       if (!data.data || !data.data.text) {
         throw new Error('Could not extract text from URL');
       }
-      
+
       return data.data.text;
     } catch (err) {
       throw new Error(`Extraction failed: ${err.message}`);
@@ -73,13 +73,6 @@ Ricorda: l'annuncio è stato scritto da chi vuole pagare il meno possibile. Dill
   const analyzeWithHF = async (text) => {
     try {
       setStep('analyzing');
-      
-      const messages = [
-        {
-          role: 'user',
-          content: `Analizza questo annuncio di lavoro secondo il protocollo indicato:\n\n${text}`
-        }
-      ];
 
       const response = await fetch(
         `https://api-inference.huggingface.co/models/${HF_MODEL}`,
@@ -106,18 +99,17 @@ Ricorda: l'annuncio è stato scritto da chi vuole pagare il meno possibile. Dill
       }
 
       const result = await response.json();
-      
+
       if (!Array.isArray(result) || !result[0]?.generated_text) {
         throw new Error('Invalid response format');
       }
 
-      // Estrai solo la parte generata (scarta il prompt)
       const fullText = result[0].generated_text;
       const analysisStart = fullText.indexOf('ANNUNCIO DA ANALIZZARE:');
       if (analysisStart !== -1) {
         return fullText.substring(analysisStart + 'ANNUNCIO DA ANALIZZARE:'.length).trim();
       }
-      
+
       return fullText;
     } catch (err) {
       throw new Error(`Analysis failed: ${err.message}`);
@@ -126,7 +118,7 @@ Ricorda: l'annuncio è stato scritto da chi vuole pagare il meno possibile. Dill
 
   const handleAnalyze = async (e) => {
     e.preventDefault();
-    
+
     if (!url.trim()) {
       setError('Incolla un URL valido');
       return;
@@ -157,7 +149,7 @@ Ricorda: l'annuncio è stato scritto da chi vuole pagare il meno possibile. Dill
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-8">
       <div className="max-w-2xl mx-auto">
-        
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">

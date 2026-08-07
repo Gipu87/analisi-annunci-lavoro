@@ -55,16 +55,16 @@ Ricorda: l'annuncio è stato scritto da chi vuole pagare il meno possibile. Dill
       setStep('fetching');
       setError('');
 
-      const response = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(jobUrl)}&data.text`);
+      const response = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(jobUrl)}&data.markdown.attr=markdown&meta=false`);
       if (!response.ok) throw new Error('Microlink error');
 
       const data = await response.json();
 
-      if (!data.data || !data.data.text) {
+      if (!data.data || !data.data.markdown) {
         throw new Error('Could not extract text from URL');
       }
 
-      return data.data.text;
+      return data.data.markdown;
     } catch (err) {
       throw new Error(`Extraction failed: ${err.message}`);
     }

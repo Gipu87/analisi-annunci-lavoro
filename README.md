@@ -4,7 +4,7 @@ Una web app minimale e gratuita che analizza gli annunci di lavoro con uno stile
 
 ## Come Funziona
 
-1. **Input**: Incolla il link dell'annuncio (LinkedIn, Indeed, etc.)
+1. **Input**: Incolla il link dell'annuncio LinkedIn
 2. **Estrazione**: Microlink converte l'annuncio in Markdown
 3. **Analisi**: Hugging Face (Mistral 7B) lo analizza con il "Motore Cinico"
 4. **Output**: Ricevi l'analisi con dati estratti, red flag, e verdetto finale

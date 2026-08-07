@@ -55,7 +55,7 @@ Ricorda: l'annuncio è stato scritto da chi vuole pagare il meno possibile. Dill
       setStep('fetching');
       setError('');
 
-      const response = await fetch(`https://microlink.io?url=${encodeURIComponent(jobUrl)}`);
+      const response = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(jobUrl)}&data.text`);
       if (!response.ok) throw new Error('Microlink error');
 
       const data = await response.json();

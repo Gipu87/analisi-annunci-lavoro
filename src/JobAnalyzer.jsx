@@ -9,7 +9,7 @@ export default function JobAnalyzer() {
   const [step, setStep] = useState('idle'); // idle, fetching, analyzing, done
 
   const HF_API_KEY = process.env.REACT_APP_HF_API_KEY;
-  const HF_MODEL = 'mistralai/Mistral-7B-Instruct-v0.2';
+  const HF_MODEL = 'meta-llama/Llama-3.2-11B-Vision-Instruct';
 
   const systemPrompt = `Sei un analista di annunci di lavoro specializzato in contratti italiani. La tua missione è smontare la retorica, estrarre i dati oggettivi e identificare le red flag contrattuali che il candidato non dovrebbe ignorare.
 
@@ -75,7 +75,7 @@ Ricorda: l'annuncio è stato scritto da chi vuole pagare il meno possibile. Dill
       setStep('analyzing');
 
       const response = await fetch(
-        `https://api-inference.huggingface.co/models/${HF_MODEL}`,
+        `https://router.huggingface.co/v1/chat/completions`,
         {
           method: 'POST',
           headers: {
@@ -83,34 +83,29 @@ Ricorda: l'annuncio è stato scritto da chi vuole pagare il meno possibile. Dill
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            inputs: systemPrompt + '\n\nANNUNCIO DA ANALIZZARE:\n' + text,
-            parameters: {
-              max_new_tokens: 1024,
-              temperature: 0.7,
-              top_p: 0.9,
-            },
+            model: HF_MODEL,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: `Analizza questo annuncio di lavoro:\n\n${text}` }
+            ],
+            max_tokens: 1024,
+            temperature: 0.7,
           }),
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`HF API error: ${errorData.error || response.statusText}`);
+        throw new Error(`HF API error: ${errorData.error?.message || errorData.error || response.statusText}`);
       }
 
       const result = await response.json();
 
-      if (!Array.isArray(result) || !result[0]?.generated_text) {
+      if (!result.choices || !result.choices[0]?.message?.content) {
         throw new Error('Invalid response format');
       }
 
-      const fullText = result[0].generated_text;
-      const analysisStart = fullText.indexOf('ANNUNCIO DA ANALIZZARE:');
-      if (analysisStart !== -1) {
-        return fullText.substring(analysisStart + 'ANNUNCIO DA ANALIZZARE:'.length).trim();
-      }
-
-      return fullText;
+      return result.choices[0].message.content;
     } catch (err) {
       throw new Error(`Analysis failed: ${err.message}`);
     }

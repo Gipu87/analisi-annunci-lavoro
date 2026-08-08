@@ -15,6 +15,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'GROQ_API_KEY not configured on server' });
   }
 
+  // Estrazione intelligente: cerca keyword critiche
   const extractKeyData = (fullText) => {
     const lines = fullText.split('\n').filter(l => l.trim());
     const extracted = [];
@@ -48,19 +49,16 @@ export default async function handler(req, res) {
     });
   }
 
-  const systemPrompt = `Risposta finale SOLO in questo formato, niente altro:
+  const systemPrompt = `Sei un analista onesto e diretto di annunci di lavoro. Il tuo scopo è evidenziare punti di forza reali e criticità nascoste nel gergo aziendale, senza esagerare o accusare senza prove.
+Regole tassative:
+- NESSUNA FORMATTAZIONE MARKDOWN. Assolutamente vietati asterischi (*) o grassetti. Testo piatto.
+- LINGUA: Rispondi solo e unicamente in italiano.
+- TONO: Diretto e onesto, ma equilibrato. Se l'annuncio è valido, dillo chiaramente. Se ha problemi, segnalali senza accusare di frode o malafede se non ci sono prove certe.
 
-SINTESI: [1 riga: ruolo + RAL (se presente) + tipo contratto, anonimo, zero nomi aziendali]
-
-RED FLAG:
-1. [prima red flag principale]
-2. [seconda red flag principale]
-3. [terza red flag principale]
-
-VERDETTO: [una sola frase chiara: Candidati / Passa / Rifiuta / Negozia + motivazione breve, senza accusare di frode, usa "Sembra che" o "Rischia di essere"]
-
-TON: Onesto e diretto, ma non accusatorio. Se mancano dati, segnala il rischio senza concludere con certezza che sia una truffa. Se è valido, dillo.
-NON INCLUDERE: thinking, dati estratti, analisi, nomi aziendali, righe extra.`;
+Output richiesto (scrivi solo queste tre voci, in questo esatto ordine e formato):
+Sintesi: [descrizione chiara e reale del ruolo, spogliato dal marketing aziendale, zero nomi aziendali]
+Red Flag: [le 3 criticità principali o assenza di informazioni chiave. Sii specifico ma misurato]
+Verdetto: [Scegli solo tra: Candidati / Passa / Rifiuta / Negozia]. [Aggiungi una sola riga di motivazione chiara e onesta, senza accuse di truffa se non ci sono prove esplicite]`;
 
   try {
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -71,13 +69,11 @@ NON INCLUDERE: thinking, dati estratti, analisi, nomi aziendali, righe extra.`;
       },
       body: JSON.stringify({
         model: 'openai/gpt-oss-20b',
-        reasoning_format: 'hidden',
-        reasoning_effort: 'low',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: keyData.join('\n') }
         ],
-        max_tokens: 300,
+        max_tokens: 1500,
         temperature: 0.4,
       }),
     });

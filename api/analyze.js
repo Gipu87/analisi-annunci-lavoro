@@ -59,7 +59,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-20b',
+        model: 'qwen/qwen3.6-27b',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: keyData.join('\n') }

@@ -15,11 +15,9 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'GROQ_API_KEY not configured on server' });
   }
 
-  // Preprocessing: togliere il rumore dal markdown
   const cleanText = text
     .split('\n')
     .filter(line => line.trim().length > 0)
-    .slice(0, 50) // Prendi solo le prime 50 righe (titolo, descrizione, dettagli)
     .join('\n');
 
   const systemPrompt = `Analizza veloce. Output: 1 riga ruolo+RAL+contratto. 1 riga motivo valido/invalido. 1 riga verdetto (Candidati/Passa/Rifiuta/Negozia). Zero nomi aziendali.`;
@@ -32,7 +30,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'mixtral-8x7b-32768',
+        model: 'mistral-saba-24b',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: cleanText }

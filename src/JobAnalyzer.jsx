@@ -8,48 +8,6 @@ export default function JobAnalyzer() {
   const [error, setError] = useState('');
   const [step, setStep] = useState('idle'); // idle, fetching, analyzing, done
 
-  const HF_API_KEY = process.env.REACT_APP_HF_API_KEY;
-  const HF_MODEL = 'meta-llama/Llama-3.2-11B-Vision-Instruct';
-
-  const systemPrompt = `Sei un analista di annunci di lavoro specializzato in contratti italiani. La tua missione è smontare la retorica, estrarre i dati oggettivi e identificare le red flag contrattuali che il candidato non dovrebbe ignorare.
-
-Non sei un assistente gentile. Sei chirurgico, diretto, spietato verso le proposte fuori mercato.
-
-PROTOCOLLO DI ANALISI:
-
-1. ESTRAZIONE DATI OGGETTIVI
-Estrai e presenta chiaramente:
-- Inquadramento: Livello (junior/mid/senior), ruolo effettivo
-- Compenso: RAL dichiarata, bonus, benefits reali
-- Tipo contratto: Tempo indeterminato, apprendistato, P.IVA, tirocinio
-- Orari e luogo: Full-time? Ibrido? Remote?
-- Mansioni: Elenca tutte (anche le nascoste)
-
-2. SMONTAGGIO DELLA RETORICA
-Ignora slogan come "ambiente dinamico", "opportunità di crescita", "team appassionato". Sono maschere.
-Concentrati su: cosa pagano realmente? Quali sono le ore effettive?
-
-3. RED FLAG ITALIANE
-- P.IVA camuffata: autonomo per mansioni dipendenti
-- Apprendistato abusivo: 25+ anni per ruoli senior
-- Mansioni moltiplicate: una persona, 3 ruoli, uno stipendio
-- Trasparenza assente: RAL non dichiarata, orari vaghi
-- Probas lunghe (6+ mesi)
-
-4. TONE
-Diretto, cinico, analitico. Esempi:
-- ✅ "Questo è un incarico da apprendista con responsabilità da senior. Rifiuta."
-- ✅ "Non dichiarano orari. Rischio lavoro al di fuori dei tempi concordati."
-- ✅ "Se la RAL è 'da definirsi', loro non hanno limiti. Tu sì."
-
-STRUTTURA RISPOSTA:
-1. DATI ESTRATTI (lista chiara)
-2. SMONTAGGIO DELLA RETORICA (cosa dicono vs cosa significa)
-3. RED FLAG IDENTIFICATE (in ordine di gravità)
-4. VERDETTO FINALE (una sola frase chiara)
-
-Ricorda: l'annuncio è stato scritto da chi vuole pagare il meno possibile. Dillo senza filtri.`;
-
   const fetchMarkdown = async (jobUrl) => {
     try {
       setStep('fetching');
@@ -70,42 +28,25 @@ Ricorda: l'annuncio è stato scritto da chi vuole pagare il meno possibile. Dill
     }
   };
 
-  const analyzeWithHF = async (text) => {
+  const analyzeViaServerless = async (text) => {
     try {
       setStep('analyzing');
 
-      const response = await fetch(
-        `https://router.huggingface.co/v1/chat/completions`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${HF_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: HF_MODEL,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: `Analizza questo annuncio di lavoro:\n\n${text}` }
-            ],
-            max_tokens: 1024,
-            temperature: 0.7,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`HF API error: ${errorData.error?.message || errorData.error || response.statusText}`);
-      }
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text }),
+      });
 
       const result = await response.json();
 
-      if (!result.choices || !result.choices[0]?.message?.content) {
-        throw new Error('Invalid response format');
+      if (!response.ok) {
+        throw new Error(result.error || 'Analysis failed');
       }
 
-      return result.choices[0].message.content;
+      return result.analysis;
     } catch (err) {
       throw new Error(`Analysis failed: ${err.message}`);
     }
@@ -119,18 +60,13 @@ Ricorda: l'annuncio è stato scritto da chi vuole pagare il meno possibile. Dill
       return;
     }
 
-    if (!HF_API_KEY) {
-      setError('HF_API_KEY non configurata');
-      return;
-    }
-
     setLoading(true);
     setAnalysis('');
     setError('');
 
     try {
       const markdown = await fetchMarkdown(url);
-      const result = await analyzeWithHF(markdown);
+      const result = await analyzeViaServerless(markdown);
       setAnalysis(result);
       setStep('done');
     } catch (err) {
@@ -208,10 +144,10 @@ Ricorda: l'annuncio è stato scritto da chi vuole pagare il meno possibile. Dill
         {/* Info Footer */}
         <div className="mt-12 text-xs text-slate-500 border-t border-slate-700 pt-6">
           <p className="mb-2">
-            <strong>Come funziona:</strong> L'annuncio viene scaricato via Microlink, analizzato da un modello open-source (Mistral 7B) su Hugging Face. Nessun dato è archiviato.
+            <strong>Come funziona:</strong> L'annuncio viene scaricato via Microlink e analizzato da Groq (Llama 3.3 70B). Nessun dato è archiviato.
           </p>
           <p>
-            <strong>Limite:</strong> 25 richieste/giorno per IP. Se esaurite, riprova domani.
+            <strong>Limite:</strong> 25 richieste/giorno per IP su Microlink. Se esaurite, riprova domani.
           </p>
         </div>
       </div>

@@ -29,18 +29,20 @@ export default async function handler(req, res) {
     const noiseLine = /^(\[.*\]\(.*\)|!\[.*\]\(.*\)|---+|##? Table of Contents)$/i;
 
     for (const line of lines) {
-      const lower = line.trim().toLowerCase();
+      const trimmed = line.trim();
+      const lower = trimmed.toLowerCase();
+      const isRealHeader = /^#{1,3}\s/.test(trimmed); // solo veri titoli, non voci di indice/link
 
-      if (sectionStops.some(stop => lower.includes(stop))) {
+      if (isRealHeader && sectionStops.some(stop => lower.includes(stop))) {
         skipSection = true;
         continue;
       }
-      if (skipSection) continue; // resta in skip fino alla fine (sono sempre sezioni finali)
+      if (skipSection) continue;
 
-      if (!line.trim()) continue;
-      if (noiseLine.test(line.trim())) continue;
+      if (!trimmed) continue;
+      if (noiseLine.test(trimmed)) continue;
 
-      cleaned.push(line.trim());
+      cleaned.push(trimmed);
     }
 
     return cleaned;
@@ -62,8 +64,8 @@ Regole tassative:
 
 Output richiesto (scrivi solo queste tre voci, in questo esatto ordine e formato):
 Sintesi: [descrizione chiara e reale del ruolo, spogliato dal marketing aziendale, zero nomi aziendali]
-Red Flag: [le 3 criticità principali o assenza di informazioni chiave. Sii specifico ma misurato. Vietato considerare mai come red flag l'assenza di dettagli sul "come candidarsi" o "link per candidarsi": su piattaforme come LinkedIn la candidatura avviene tramite un pulsante che non compare nel testo estratto, quindi questa non è un'ambiguità reale del datore di lavoro]
-Verdetto: [Usa ESCLUSIVAMENTE Candidati oppure Rifiuta. Non usare mai altre parole come Negozia, Valuta, Considera.]. [Aggiungi una sola riga di motivazione chiara e onesta, senza accuse di truffa se non ci sono prove esplicite]`;
+Red Flag: [le 3 criticità principali o assenza di informazioni chiave. Sii specifico ma misurato. Vietato considerare come red flag l'assenza di dettagli sul "come candidarsi" o "link per candidarsi": su piattaforme come LinkedIn la candidatura avviene tramite un pulsante che non compare nel testo estratto, quindi questa non è un'ambiguità reale del datore di lavoro]
+Verdetto: [Usa ESCLUSIVAMENTE Candidati oppure Rifiuta. Non usare mai parole come Negozia, Valuta, Considera.]. [Aggiungi una sola riga di motivazione chiara e onesta, senza accuse di truffa se non ci sono prove esplicite]`;
 
   try {
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {

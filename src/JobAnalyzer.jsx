@@ -164,10 +164,10 @@ export default function JobAnalyzer() {
         {/* Info Footer */}
         <div className="mt-12 text-xs text-slate-500 border-t border-slate-700 pt-6">
           <p className="mb-2">
-            <strong>Come funziona:</strong> L'annuncio viene scaricato tramite Microlink e analizzato dall'intelligenza artificiale. Nessun dato viene archiviato.
+            <strong>Come funziona:</strong> l'annuncio viene scaricato tramite Microlink e analizzato dall'IA. Nessun dato viene archiviato.
           </p>
           <p>
-            <strong>Note tecniche:</strong> La web app opera in free tier su Groq; in caso di mancata risposta dovuta ai limiti di utilizzo, si prega di riprovare più tardi quando i contatori saranno resettati.
+            <strong>Note tecniche:</strong> la web app opera in free tier su Groq; in caso di mancata risposta dovuta ai limiti di utilizzo, si prega di riprovare più tardi quando i contatori saranno resettati.
           </p>
         </div>
       </div>

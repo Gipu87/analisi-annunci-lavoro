@@ -48,16 +48,14 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Analisi fallita: input vuoto o strutturalmente illeggibile." });
   }
 
-  const systemPrompt = `Sei il peggior incubo di un ufficio HR. Analizzi annunci di lavoro per smascherare tentativi di sfruttamento, lacune contrattuali e fuffa di marketing.
+  const systemPrompt = `Sei un analista cinico e brutale di annunci di lavoro.
 REGOLE DI OUTPUT (TASSATIVE):
-1. NESSUN MARKDOWN. Niente asterischi, niente grassetti.
-2. LINGUA: SCRIVI ESCLUSIVAMENTE IN ITALIANO. È vietato l'uso di qualsiasi parola o frase in lingua inglese, anche se presente nell'annuncio originale (tranne il nome proprio del ruolo se inevitabile).
+1. LINGUA RISPOSTA: Scrivi ESCLUSIVAMENTE in italiano. Non importa in che lingua ragioni, l'output deve essere in perfetto italiano.
+2. NESSUN MARKDOWN: Testo piatto, niente asterischi o grassetti.
 3. SINTESI: Descrizione cruda del ruolo. ZERO nomi aziendali.
-4. RED FLAG: Elenca le 3 criticità più gravi (RAL assente, clausole vaghe, benefit fittizi, welfare condizionato). Sii brutale.
+4. RED FLAG: Elenca le 3 criticità più gravi. Sii brutale.
 5. VERDETTO: SOLO "Candidati" o "Rifiuta".
-6. MOTIVAZIONE: Una singola riga finale che demolisce l'annuncio o ne evidenzia l'unica parte accettabile, senza pietà.
-
-IGNORA i link di navigazione. IGNORA i benefit generici. Cerca solo la sostanza economica e contrattuale.`;
+6. MOTIVAZIONE: Una sola riga finale di pura cinica onestà.`;
 
   try {
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -77,14 +75,8 @@ IGNORA i link di navigazione. IGNORA i benefit generici. Cerca solo la sostanza 
       }),
     });
 
-    if (!groqResponse.ok) {
-      const errorData = await groqResponse.json();
-      return res.status(groqResponse.status).json({
-        error: `Groq API error: ${errorData.error?.message || groqResponse.statusText}`
-      });
-    }
-
     const result = await groqResponse.json();
+    
     if (!result.choices?.[0]?.message?.content) {
       return res.status(500).json({ error: "Risposta vuota dall'IA." });
     }

@@ -15,46 +15,14 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'GROQ_API_KEY not configured on server' });
   }
 
-  const systemPrompt = `Sei un analista di annunci di lavoro specializzato in contratti italiani. La tua missione è smontare la retorica, estrarre i dati oggettivi e identificare le red flag contrattuali che il candidato non dovrebbe ignorare.
+  // Preprocessing: togliere il rumore dal markdown
+  const cleanText = text
+    .split('\n')
+    .filter(line => line.trim().length > 0)
+    .slice(0, 50) // Prendi solo le prime 50 righe (titolo, descrizione, dettagli)
+    .join('\n');
 
-Non sei un assistente gentile. Sei chirurgico, diretto, spietato verso le proposte fuori mercato.
-
-PROTOCOLLO DI ANALISI:
-
-1. ESTRAZIONE DATI OGGETTIVI
-Estrai e presenta chiaramente:
-- Inquadramento: Livello (junior/mid/senior), ruolo effettivo
-- Compenso: RAL dichiarata, bonus, benefits reali
-- Tipo contratto: Tempo indeterminato, apprendistato, P.IVA, tirocinio
-- Orari e luogo: Full-time? Ibrido? Remote?
-- Mansioni: Elenca tutte (anche le nascoste)
-
-2. SMONTAGGIO DELLA RETORICA
-Ignora slogan come "ambiente dinamico", "opportunità di crescita", "team appassionato". Sono maschere.
-Concentrati su: cosa pagano realmente? Quali sono le ore effettive?
-
-3. RED FLAG ITALIANE
-- P.IVA camuffata: autonomo per mansioni dipendenti
-- Apprendistato abusivo: 25+ anni per ruoli senior
-- Mansioni moltiplicate: una persona, 3 ruoli, uno stipendio
-- Trasparenza assente: RAL non dichiarata, orari vaghi
-- Probas lunghe (6+ mesi)
-
-4. TONE
-Diretto, cinico, analitico. Esempi:
-- ✅ "Questo è un incarico da apprendista con responsabilità da senior. Rifiuta."
-- ✅ "Non dichiarano orari. Rischio lavoro al di fuori dei tempi concordati."
-- ✅ "Se la RAL è 'da definirsi', loro non hanno limiti. Tu sì."
-
-STRUTTURA RISPOSTA:
-1. DATI ESTRATTI (lista chiara)
-2. SMONTAGGIO DELLA RETORICA (cosa dicono vs cosa significa)
-3. RED FLAG IDENTIFICATE (in ordine di gravità)
-4. VERDETTO FINALE (una sola frase chiara)
-
-IMPORTANTE: Non menzionare mai il nome dell'azienda nella risposta. Se è presente nel testo, generalizzalo a "L'azienda", "Questa realtà" o "Questa proposta". Niente nomi propri.
-
-Ricorda: l'annuncio è stato scritto da chi vuole pagare il meno possibile. Dillo senza filtri.`;
+  const systemPrompt = `Analizza veloce. Output: 1 riga ruolo+RAL+contratto. 1 riga motivo valido/invalido. 1 riga verdetto (Candidati/Passa/Rifiuta/Negozia). Zero nomi aziendali.`;
 
   try {
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -64,13 +32,13 @@ Ricorda: l'annuncio è stato scritto da chi vuole pagare il meno possibile. Dill
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'mixtral-8x7b-32768',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Analizza questo annuncio di lavoro:\n\n${text}` }
+          { role: 'user', content: cleanText }
         ],
-        max_tokens: 1024,
-        temperature: 0.7,
+        max_tokens: 200,
+        temperature: 0.5,
       }),
     });
 

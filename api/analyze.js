@@ -73,7 +73,7 @@ Verdetto: [Scegli solo tra: Candidati / Fuggi / Rifiuta / Negozia col sangue]. [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: keyData.join('\n') }
         ],
-        max_tokens: 500,
+        max_tokens: 1500,
         temperature: 0.4,
       }),
     });

@@ -15,12 +15,41 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'GROQ_API_KEY not configured on server' });
   }
 
-  const cleanText = text
-    .split('\n')
-    .filter(line => line.trim().length > 0)
-    .join('\n');
+  // Estrazione intelligente: cerca keyword critiche
+  const extractKeyData = (fullText) => {
+    const lines = fullText.split('\n').filter(l => l.trim());
+    const extracted = [];
 
-  const systemPrompt = `Analizza veloce. Output: 1 riga ruolo+RAL+contratto. 1 riga motivo valido/invalido. 1 riga verdetto (Candidati/Passa/Rifiuta/Negozia). Zero nomi aziendali.`;
+    const keywords = [
+      'ral', 'stipendio', 'compenso', 'salary', 'wage',
+      'contratto', 'contract', 'tipo di contratto',
+      'mansione', 'responsabilità', 'duties', 'role',
+      'orari', 'hours', 'full-time', 'part-time', 'remote',
+      'sede', 'location', 'where', 'luogo',
+      'esperienza', 'experience', 'years', 'anni',
+      'benefit', 'benefits', 'ferie', 'holiday'
+    ];
+
+    for (const line of lines) {
+      const lower = line.toLowerCase();
+      if (keywords.some(kw => lower.includes(kw))) {
+        extracted.push(line.trim());
+        if (extracted.length >= 15) break;
+      }
+    }
+
+    return extracted;
+  };
+
+  const keyData = extractKeyData(text);
+
+  if (keyData.length === 0) {
+    return res.status(400).json({ 
+      error: "L'annuncio non sembra contenere le informazioni essenziali per un'analisi approfondita." 
+    });
+  }
+
+  const systemPrompt = `Rapido. Solo: 1 riga ruolo+RAL+contratto. 1 riga motivo valido/invalido. 1 riga verdetto (Candidati/Passa/Rifiuta/Negozia). Zero nomi aziendali.`;
 
   try {
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -33,10 +62,10 @@ export default async function handler(req, res) {
         model: 'mistral-saba-24b',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: cleanText }
+          { role: 'user', content: keyData.join('\n') }
         ],
-        max_tokens: 200,
-        temperature: 0.5,
+        max_tokens: 150,
+        temperature: 0.4,
       }),
     });
 

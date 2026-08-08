@@ -15,7 +15,6 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'GROQ_API_KEY not configured on server' });
   }
 
-  // Estrazione intelligente: cerca keyword critiche
   const extractKeyData = (fullText) => {
     const lines = fullText.split('\n').filter(l => l.trim());
     const extracted = [];
@@ -71,12 +70,14 @@ NON INCLUDERE: thinking, dati estratti, analisi, nomi aziendali, righe extra.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'qwen/qwen3.6-27b',
+        model: 'openai/gpt-oss-20b',
+        reasoning_format: 'hidden',
+        reasoning_effort: 'low',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: keyData.join('\n') }
         ],
-        max_tokens: 100,
+        max_tokens: 300,
         temperature: 0.4,
       }),
     });

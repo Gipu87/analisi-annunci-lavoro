@@ -72,13 +72,20 @@ IGNORA i link di navigazione. IGNORA i benefit generici. Cerca solo la sostanza 
           { role: 'user', content: keyData.join('\n') }
         ],
         max_tokens: 1500,
-        temperature: 0.2, // Abbassata per ridurre la creatività diplomatica
+        temperature: 0.2,
       }),
     });
 
+    if (!groqResponse.ok) {
+      const errorData = await groqResponse.json();
+      return res.status(groqResponse.status).json({
+        error: `Groq API error: ${errorData.error?.message || groqResponse.statusText}`
+      });
+    }
+
     const result = await groqResponse.json();
     if (!result.choices?.[0]?.message?.content) {
-      return res.status(500).json({ error: 'Risposta vuota dall'IA.' });
+      return res.status(500).json({ error: "Risposta vuota dall'IA." });
     }
 
     return res.status(200).json({ analysis: result.choices[0].message.content });

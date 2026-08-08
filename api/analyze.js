@@ -52,6 +52,8 @@ STRUTTURA RISPOSTA:
 3. RED FLAG IDENTIFICATE (in ordine di gravità)
 4. VERDETTO FINALE (una sola frase chiara)
 
+IMPORTANTE: Non menzionare mai il nome dell'azienda nella risposta. Se è presente nel testo, generalizzalo a "L'azienda", "Questa realtà" o "Questa proposta". Niente nomi propri.
+
 Ricorda: l'annuncio è stato scritto da chi vuole pagare il meno possibile. Dillo senza filtri.`;
 
   try {

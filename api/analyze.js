@@ -59,7 +59,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'qwen/qwen3.6-27b',
+        model: 'openai/gpt-oss-20b',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: keyData.join('\n') }
@@ -77,9 +77,12 @@ export default async function handler(req, res) {
     }
 
     const result = await groqResponse.json();
+    
+    // Log iniettato per estrarre la spazzatura restituita dall'API
+    console.log("PAYLOAD GROQ:", JSON.stringify(result, null, 2));
 
     if (!result.choices || !result.choices[0]?.message?.content) {
-      return res.status(500).json({ error: 'Invalid response format from Groq' });
+      return res.status(500).json({ error: 'Invalid response format from Groq. Controlla i log su Vercel.' });
     }
 
     return res.status(200).json({ analysis: result.choices[0].message.content });

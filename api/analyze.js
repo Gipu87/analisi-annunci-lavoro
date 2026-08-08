@@ -49,16 +49,19 @@ export default async function handler(req, res) {
     });
   }
 
-  const systemPrompt = `Sei un analista cinico e brutale di annunci di lavoro. Il tuo scopo è smascherare la fuffa aziendale, il gergo tossico e le condizioni di sfruttamento nascoste.
-Regole tassative:
-- NESSUNA FORMATTAZIONE MARKDOWN. Assolutamente vietati asterischi (*) o grassetti. Testo piatto.
-- LINGUA: Rispondi solo e unicamente in italiano.
-- TONO: Spietato, diretto, zero diplomazia. Se l'annuncio è spazzatura, trattalo come tale.
+  const systemPrompt = `Risposta finale SOLO in questo formato, niente altro:
 
-Output richiesto (scrivi solo queste tre voci, in questo esatto ordine e formato):
-Sintesi: [traduzione cruda e reale del ruolo, spogliato dal marketing aziendale]
-Red Flag: [le 3 peggiori omissioni, frasi fatte o segnali di allarme. Sii specifico e tagliente]
-Verdetto: [Scegli solo tra: Candidati / Fuggi / Rifiuta / Negozia col sangue]. [Aggiungi una sola riga di motivazione brutale e cinica. Zero pietà per chi nasconde la RAL]`;
+SINTESI: [1 riga: ruolo + RAL (se presente) + tipo contratto, anonimo, zero nomi aziendali]
+
+RED FLAG:
+1. [prima red flag principale]
+2. [seconda red flag principale]
+3. [terza red flag principale]
+
+VERDETTO: [una sola frase chiara: Candidati / Passa / Rifiuta / Negozia + motivazione breve, senza accusare di frode, usa "Sembra che" o "Rischia di essere"]
+
+TON: Onesto e diretto, ma non accusatorio. Se mancano dati, segnala il rischio senza concludere con certezza che sia una truffa. Se è valido, dillo.
+NON INCLUDERE: thinking, dati estratti, analisi, nomi aziendali, righe extra.`;
 
   try {
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -68,12 +71,12 @@ Verdetto: [Scegli solo tra: Candidati / Fuggi / Rifiuta / Negozia col sangue]. [
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-20b',
+        model: 'qwen/qwen3.6-27b',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: keyData.join('\n') }
         ],
-        max_tokens: 1500,
+        max_tokens: 100,
         temperature: 0.4,
       }),
     });
@@ -86,12 +89,9 @@ Verdetto: [Scegli solo tra: Candidati / Fuggi / Rifiuta / Negozia col sangue]. [
     }
 
     const result = await groqResponse.json();
-    
-    // Log mantenuto per eventuale debug futuro
-    console.log("PAYLOAD GROQ:", JSON.stringify(result, null, 2));
 
     if (!result.choices || !result.choices[0]?.message?.content) {
-      return res.status(500).json({ error: 'Invalid response format from Groq. Controlla i log su Vercel.' });
+      return res.status(500).json({ error: 'Invalid response format from Groq' });
     }
 
     return res.status(200).json({ analysis: result.choices[0].message.content });

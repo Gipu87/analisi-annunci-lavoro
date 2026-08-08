@@ -49,7 +49,7 @@ export default async function handler(req, res) {
     });
   }
 
-  const systemPrompt = `Rapido. Solo: 1 riga ruolo+RAL+contratto. 1 riga motivo valido/invalido. 1 riga verdetto (Candidati/Passa/Rifiuta/Negozia). Zero nomi aziendali.`;
+  const systemPrompt = `NON FARE THINKING. Risposta finale SOLO: 1 riga ruolo+RAL+tipo contratto. 1 riga perché valido/invalido. 1 riga verdetto (Candidati/Passa/Rifiuta/Negozia). Zero nomi aziendali. Zero dati estratti mostrati.`;
 
   try {
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -64,7 +64,7 @@ export default async function handler(req, res) {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: keyData.join('\n') }
         ],
-        max_tokens: 150,
+        max_tokens: 100,
         temperature: 0.4,
       }),
     });

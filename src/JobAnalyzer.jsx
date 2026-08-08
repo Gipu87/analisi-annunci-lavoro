@@ -86,9 +86,29 @@ export default function JobAnalyzer() {
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
             Analisi Annunci di Lavoro
           </h1>
-          <p className="text-slate-400 text-sm">
+          <p className="text-slate-400 text-sm mb-4">
             Incolla il link dell'annuncio. Scopri le red flag prima di candidarti.
           </p>
+          <div className="flex gap-3 items-center text-xs text-slate-500">
+            <span>Se hai apprezzato questo tool, ringraziami con un segui su</span>
+            <a 
+              href="https://www.instagram.com/gipu87/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-amber-400 hover:text-amber-300 transition font-medium"
+            >
+              Instagram
+            </a>
+            <span>e</span>
+            <a 
+              href="https://www.linkedin.com/in/gipu87/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-amber-400 hover:text-amber-300 transition font-medium"
+            >
+              LinkedIn
+            </a>
+          </div>
         </div>
 
         {/* Input Form */}

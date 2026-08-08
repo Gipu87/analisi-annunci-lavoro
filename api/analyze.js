@@ -49,7 +49,11 @@ export default async function handler(req, res) {
     });
   }
 
-  const systemPrompt = `NON FARE THINKING. Risposta finale SOLO: 1 riga ruolo+RAL+tipo contratto. 1 riga perché valido/invalido. 1 riga verdetto (Candidati/Passa/Rifiuta/Negozia). Zero nomi aziendali. Zero dati estratti mostrati.`;
+  const systemPrompt = `Agisci come un analista spietato di annunci di lavoro. L'output deve essere chirurgico e composto SOLO ed ESCLUSIVAMENTE da queste tre sezioni:
+1. Sintesi: breve riassunto del ruolo.
+2. Red Flag: le 3 principali criticità o trappole dell'annuncio.
+3. Verdetto: (Candidati / Passa / Rifiuta / Negozia) più una riga di motivazione.
+Non riepilogare i dati estratti, non aggiungere convenevoli o introduzioni. Zero parole inutili.`;
 
   try {
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -64,7 +68,7 @@ export default async function handler(req, res) {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: keyData.join('\n') }
         ],
-        max_tokens: 100,
+        max_tokens: 500,
         temperature: 0.4,
       }),
     });
@@ -78,7 +82,7 @@ export default async function handler(req, res) {
 
     const result = await groqResponse.json();
     
-    // Log iniettato per estrarre la spazzatura restituita dall'API
+    // Log mantenuto per eventuale debug futuro
     console.log("PAYLOAD GROQ:", JSON.stringify(result, null, 2));
 
     if (!result.choices || !result.choices[0]?.message?.content) {

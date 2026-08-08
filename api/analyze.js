@@ -15,31 +15,41 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'GROQ_API_KEY not configured on server' });
   }
 
-  // Rimuove solo il rumore strutturale fisso di LinkedIn (TOC, annunci simili, footer legale)
-  // Mantiene TUTTO il contenuto reale dell'annuncio, senza tetto di righe e senza filtrare per keyword
+  // Rimuove solo il rumore strutturale fisso di LinkedIn
   const cleanNoise = (fullText) => {
     const lines = fullText.split('\n');
     const cleaned = [];
     let skipSection = false;
 
+    // ESCLUDIAMO 'table of contents' dai blocchi che attivano lo skipSection
     const sectionStops = [
       'similar jobs', 'people also viewed', 'similar searches',
-      'explore top content', 'table of contents'
+      'explore top content'
     ];
-    const noiseLine = /^(\[.*\]\(.*\)|!\[.*\]\(.*\)|---+|##? Table of Contents)$/i;
+    
+    // REGEX BLINDATA: intercetta i link dell'indice, le immagini e le righe divisorie ---
+    const noiseLine = /^(?:-\s*)?\[.*\]\(.*\)$|^!\[.*\]\(.*\)$|^---+$/i;
 
     for (const line of lines) {
       const trimmed = line.trim();
+      if (!trimmed) continue;
+      
       const lower = trimmed.toLowerCase();
-      const isRealHeader = /^#{1,3}\s/.test(trimmed); // solo veri titoli, non voci di indice/link
 
+      // Mantiene l'intestazione Table of Contents se c'è, ma non attiva il blocco
+      if (lower.includes('table of contents')) {
+          continue; 
+      }
+
+      const isRealHeader = /^#{1,3}\s/.test(trimmed); 
+
+      // Se troviamo un vero titolo h1/h2/h3 che coincide con le sezioni da scartare, attiviamo il blocco
       if (isRealHeader && sectionStops.some(stop => lower.includes(stop))) {
         skipSection = true;
         continue;
       }
+      
       if (skipSection) continue;
-
-      if (!trimmed) continue;
       if (noiseLine.test(trimmed)) continue;
 
       cleaned.push(trimmed);
@@ -93,9 +103,11 @@ Verdetto: [Usa ESCLUSIVAMENTE Candidati oppure Rifiuta. Non usare mai parole com
     }
 
     const result = await groqResponse.json();
+    
+    console.log("PAYLOAD GROQ:", JSON.stringify(result, null, 2));
 
     if (!result.choices || !result.choices[0]?.message?.content) {
-      return res.status(500).json({ error: 'Invalid response format from Groq' });
+      return res.status(500).json({ error: 'Invalid response format from Groq. Controlla i log su Vercel.' });
     }
 
     return res.status(200).json({ analysis: result.choices[0].message.content });

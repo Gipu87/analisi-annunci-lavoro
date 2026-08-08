@@ -15,33 +15,38 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'GROQ_API_KEY not configured on server' });
   }
 
-  // Estrazione intelligente: cerca keyword critiche
-  const extractKeyData = (fullText) => {
-    const lines = fullText.split('\n').filter(l => l.trim());
-    const extracted = [];
+  // Rimuove solo il rumore strutturale fisso di LinkedIn (TOC, annunci simili, footer legale)
+  // Mantiene TUTTO il contenuto reale dell'annuncio, senza tetto di righe e senza filtrare per keyword
+  const cleanNoise = (fullText) => {
+    const lines = fullText.split('\n');
+    const cleaned = [];
+    let skipSection = false;
 
-    const keywords = [
-      'ral', 'stipendio', 'compenso', 'salary', 'wage',
-      'contratto', 'contract', 'tipo di contratto',
-      'mansione', 'responsabilità', 'duties', 'role',
-      'orari', 'hours', 'full-time', 'part-time', 'remote',
-      'sede', 'location', 'where', 'luogo',
-      'esperienza', 'experience', 'years', 'anni',
-      'benefit', 'benefits', 'ferie', 'holiday'
+    const sectionStops = [
+      'similar jobs', 'people also viewed', 'similar searches',
+      'explore top content', 'table of contents'
     ];
+    const noiseLine = /^(\[.*\]\(.*\)|!\[.*\]\(.*\)|---+|##? Table of Contents)$/i;
 
     for (const line of lines) {
-      const lower = line.toLowerCase();
-      if (keywords.some(kw => lower.includes(kw))) {
-        extracted.push(line.trim());
-        if (extracted.length >= 15) break;
+      const lower = line.trim().toLowerCase();
+
+      if (sectionStops.some(stop => lower.includes(stop))) {
+        skipSection = true;
+        continue;
       }
+      if (skipSection) continue; // resta in skip fino alla fine (sono sempre sezioni finali)
+
+      if (!line.trim()) continue;
+      if (noiseLine.test(line.trim())) continue;
+
+      cleaned.push(line.trim());
     }
 
-    return extracted;
+    return cleaned;
   };
 
-  const keyData = extractKeyData(text);
+  const keyData = cleanNoise(text);
 
   if (keyData.length === 0) {
     return res.status(400).json({ 
@@ -57,8 +62,8 @@ Regole tassative:
 
 Output richiesto (scrivi solo queste tre voci, in questo esatto ordine e formato):
 Sintesi: [descrizione chiara e reale del ruolo, spogliato dal marketing aziendale, zero nomi aziendali]
-Red Flag: [le 3 criticità principali o assenza di informazioni chiave. Sii specifico ma misurato. Vietato considerare red flag l'assenza di dettagli sul "come candidarsi" o "link per candidarsi": su piattaforme come LinkedIn la candidatura avviene tramite un pulsante che non compare nel markdown, quindi questa non è un'ambiguità reale del datore di lavoro]
-Verdetto: [Scegli solo tra: Candidati / Rifiuta]. [Aggiungi una sola riga di motivazione chiara e onesta, senza accuse di truffa se non ci sono prove esplicite]`;
+Red Flag: [le 3 criticità principali o assenza di informazioni chiave. Sii specifico ma misurato. Vietato considerare mai come red flag l'assenza di dettagli sul "come candidarsi" o "link per candidarsi": su piattaforme come LinkedIn la candidatura avviene tramite un pulsante che non compare nel testo estratto, quindi questa non è un'ambiguità reale del datore di lavoro]
+Verdetto: [Usa ESCLUSIVAMENTE Candidati oppure Rifiuta. Non usare mai altre parole come Negozia, Valuta, Considera.]. [Aggiungi una sola riga di motivazione chiara e onesta, senza accuse di truffa se non ci sono prove esplicite]`;
 
   try {
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {

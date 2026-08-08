@@ -57,8 +57,8 @@ Regole tassative:
 
 Output richiesto (scrivi solo queste tre voci, in questo esatto ordine e formato):
 Sintesi: [descrizione chiara e reale del ruolo, spogliato dal marketing aziendale, zero nomi aziendali]
-Red Flag: [le 3 criticità principali o assenza di informazioni chiave. Sii specifico ma misurato. NON considerare mai come red flag l'assenza di dettagli sul "come candidarsi" o "link per candidarsi": su piattaforme come LinkedIn la candidatura avviene tramite un pulsante che non compare nel testo estratto, quindi questa non è un'ambiguità reale del datore di lavoro]
-Verdetto: [Scegli solo tra: Candidati / Passa / Rifiuta / Negozia]. [Aggiungi una sola riga di motivazione chiara e onesta, senza accuse di truffa se non ci sono prove esplicite]`;
+Red Flag: [le 3 criticità principali o assenza di informazioni chiave. Sii specifico ma misurato. Vietato considerare red flag l'assenza di dettagli sul "come candidarsi" o "link per candidarsi": su piattaforme come LinkedIn la candidatura avviene tramite un pulsante che non compare nel markdown, quindi questa non è un'ambiguità reale del datore di lavoro]
+Verdetto: [Scegli solo tra: Candidati / Rifiuta]. [Aggiungi una sola riga di motivazione chiara e onesta, senza accuse di truffa se non ci sono prove esplicite]`;
 
   try {
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
